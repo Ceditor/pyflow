@@ -1,16 +1,6 @@
 from datapool import Datapool
 from step import Step
 
-'''
-config:
-{
-    "name": "step1",
-    "module_name": "pandas",
-    "func_name": "read_csv",
-    "param_names":{"file_name": "filepath_or_buffer"}
-}
-'''
-
 
 class Workflow:
     def __init__(self, configs: list, schema_config: dict):
@@ -81,6 +71,6 @@ if __name__ == "__main__":
     }
     workflow = Workflow(configs, schema)
     datapool = Datapool(
-        **{"raw_list1": [1, 2, 3], "raw_list2": [8, 9, 10], "max": max})
+        {"raw_list1": [1, 2, 3], "raw_list2": [8, 9, 10], "max": max})
     workflow.execute(datapool)
     print(datapool.pool)

@@ -1,6 +1,6 @@
 class Datapool:
-    def __init__(self, **kwargs):
-        self.pool = kwargs
+    def __init__(self, init_data: dict):
+        self.pool = init_data
 
     def get(self, key):
         return self.pool.get(key)
