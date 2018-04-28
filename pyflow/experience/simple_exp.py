@@ -62,5 +62,5 @@ init_data = {"raw_list1": [1, 2, 3], "raw_list2": [8, 9, 10], "max": "max",
 datapool = Datapool(
     init_data)
 # res = celery_task.apply_async((configs, schema, init_data))
-print(workflow.execute(datapool))
+print(workflow.run(datapool))
 print(datapool.pool)

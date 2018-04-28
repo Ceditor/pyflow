@@ -1,9 +1,6 @@
 from datapool import Datapool
 from step import Step
-from celery import Celery
 
-app = Celery(broker='redis://127.0.0.1:6379')
-app.config_from_object('celeryconfig')
 
 
 class Workflow:
@@ -14,7 +11,7 @@ class Workflow:
         self.schema = schema_config['schema']
         self.first_step = schema_config['first_step']
 
-    def execute(self, datapool: Datapool):
+    def run(self, datapool: Datapool):
         step_name = self.first_step
         while step_name:
             current_step = self.steps[step_name]
@@ -22,9 +19,3 @@ class Workflow:
             step_name = self.schema[current_step.name][current_step.status]
 
 
-@app.task(serializer='msgpack')
-def celery_task(workflow_config, schema_config, init_data):
-    workflow = Workflow(workflow_config, schema_config)
-    datapool = Datapool(init_data)
-    workflow.execute(datapool)
-    return datapool.pool

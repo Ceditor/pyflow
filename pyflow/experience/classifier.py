@@ -1,5 +1,6 @@
-from workflow import celery_task
+from workflow import Workflow
 from utils.toolbox import build_step
+from celery_worker.celery_tasks import run_workflow
 
 read_step = build_step(name="read_csv", module_name="pandas",
                        func_name="read_csv",
@@ -114,5 +115,5 @@ init_data = {
 # datapool = Datapool(init_data)
 # workflow.execute(datapool)
 # print(datapool.get("auc_score"))
-res = celery_task.apply_async((configs, schema, init_data))
+res = run_workflow.apply_async((configs, schema, init_data))
 print(res)
