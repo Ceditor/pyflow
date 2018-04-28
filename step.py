@@ -35,7 +35,7 @@ class Step:
     def _parse_param_map(self, datapool: Datapool):
         params = {}
         for param_name in self.param_map:
-            if self.param_map[param_name].get("key"):
+            if "key" in self.param_map[param_name]:
                 params[param_name] = \
                     datapool.get(self.param_map[param_name]["name"])[
                         self.param_map[param_name]["key"]]
@@ -47,8 +47,8 @@ class Step:
     def _parse_param_list(self, datapool: Datapool):
         params = []
         for param in self.param_list:
-            if param.get("key"):
-                params.append(datapool.get(param['name'])['key'])
+            if "key" in param:
+                params.append(datapool.get(param['name'])[param['key']])
             else:
                 params.append(datapool.get(param['name']))
         return params

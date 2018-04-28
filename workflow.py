@@ -25,10 +25,6 @@ class Workflow:
 
 @app.task(serializer='msgpack')
 def celery_task(workflow_config, schema_config, init_data):
-    schema = schema_config["schema"]
-    logging.info(type(list(schema["step1"].keys())[0]))
-    logging.info(schema_config)
-    logging.info(type(schema_config))
     workflow = Workflow(workflow_config, schema_config)
     datapool = Datapool(init_data)
     workflow.execute(datapool)
