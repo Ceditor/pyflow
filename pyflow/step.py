@@ -1,5 +1,5 @@
 import importlib
-from datapool import Datapool
+from pyflow.datapool import Datapool
 
 
 class Step:

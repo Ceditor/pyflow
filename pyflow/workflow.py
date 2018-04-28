@@ -1,6 +1,5 @@
-from datapool import Datapool
-from step import Step
-import logging
+from pyflow.datapool import Datapool
+from pyflow.step import Step
 from celery import Celery
 
 app = Celery(broker='redis://127.0.0.1:6379')

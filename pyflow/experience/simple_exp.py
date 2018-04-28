@@ -1,5 +1,5 @@
-from datapool import Datapool
-from workflow import Workflow, celery_task
+from pyflow.datapool import Datapool
+from pyflow.workflow import Workflow
 
 double2 = '''def double2(alist):
     blist = [i * 2 for i in alist]

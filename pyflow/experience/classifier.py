@@ -1,6 +1,5 @@
-from datapool import Datapool
-from workflow import Workflow,celery_task
-from utils.toolbox import build_step
+from pyflow.workflow import celery_task
+from pyflow.utils.toolbox import build_step
 
 read_step = build_step(name="read_csv", module_name="pandas",
                        func_name="read_csv",
