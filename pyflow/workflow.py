@@ -2,14 +2,13 @@ from datapool import Datapool
 from step import Step
 
 
-
 class Workflow:
-    def __init__(self, configs: list, schema_config: dict):
+    def __init__(self, config: dict):
         self.steps = {}
-        for config in configs:
-            self.steps[config['name']] = Step(**config)
-        self.schema = schema_config['schema']
-        self.first_step = schema_config['first_step']
+        for step in config['steps']:
+            self.steps[step['name']] = Step(**step)
+        self.schema = config['schema']
+        self.first_step = config['first_step']
 
     def run(self, datapool: Datapool):
         step_name = self.first_step
@@ -17,5 +16,3 @@ class Workflow:
             current_step = self.steps[step_name]
             self.steps[step_name].run(datapool)
             step_name = self.schema[current_step.name][current_step.status]
-
-

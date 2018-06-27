@@ -1,32 +1,5 @@
 from utils.safe_eval import safe_eval
-
-
-class Assertion:
-    def __init__(self, operator: str, left, right):
-        self.operator = operator
-        self.left = left
-        self.right = right
-        self.compare_operators = {
-            "=": assert_equal,
-            "@": assert_in,
-            "%": assert_include,
-            ">": assert_larger,
-            "<": assert_smaller
-        }
-        self.logic_operators = {
-            "!": assert_not,
-            "|": assert_or,
-            "&": assert_and
-        }
-
-    def do_assert(self):
-        left_value = safe_eval(self.left)
-        right_value = safe_eval(self.right)
-        operations = []
-        for operator in self.operator:
-            if operator in self.compare_operators:
-                operations.append(self.compare_operators[operator])
-
+from utils.style import Assertion
 
 
 def assert_equal(left, right):
@@ -55,16 +28,31 @@ def assert_larger(left, right):
 
 
 def assert_smaller(left, right):
-    return not (assert_equal(left, right) or assert_larger(left, right))
+    return left < right
 
 
-def assert_or(func1, func2, left, right):
-    return func1(left, right) or func2(left, right)
+compare_operators = {
+    "=": assert_equal,
+    "@": assert_in,
+    "%": assert_include,
+    ">": assert_larger,
+    "<": assert_smaller
+}
 
 
-def assert_not(func1, left, right):
-    return not func1(left, right)
+def do_assert(assertion: Assertion, param=None) -> bool:
+    left_value = safe_eval(assertion.left, param)
+    right_value = safe_eval(assertion.right, param)
+    operator = assertion.operator
+    if operator in compare_operators:
+        return compare_operators[operator](left_value,
+                                           right_value)
+    elif operator.startswith('!'):
+        if operator[1] in compare_operators:
+            return not (compare_operators[operator[1]](left_value,
+                                                       right_value))
 
 
-def assert_and(func1, func2, left, right):
-    return func1(left, right) and func2(left, right)
+if __name__ == "__main__":
+    assertion = Assertion('[1]', '[[1],2]', '@')
+    print(do_assert(assertion))

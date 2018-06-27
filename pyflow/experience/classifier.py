@@ -1,14 +1,14 @@
-from workflow import Workflow
-from utils.toolbox import build_step
+from utils.style import StepConfig
 from celery_worker.celery_tasks import run_workflow
 
-read_step = build_step(name="read_csv", module_name="pandas",
+read_step = StepConfig(name="read_csv", module_name="pandas",
                        func_name="read_csv",
                        param_list=[],
                        param_map={
-                           "filepath_or_buffer": {"name": "source_file"}},
+                           "filepath_or_buffer": "source_file"},
                        result_name="data",
-                       condition={"params": [], "func": "True"})
+                       assertion={"left": "True", "operator": "=",
+                                  "right": "True"})
 
 prepare_data = '''def prepare_data(data, settings):
     ignored_cols = settings['ignored_cols']
@@ -19,33 +19,35 @@ prepare_data = '''def prepare_data(data, settings):
     y = data[settings['target']]
     return {"X": X, "y": y}'''
 
-prepare_step = build_step(name="prepare_data",
+prepare_step = StepConfig(name="prepare_data",
                           module_name='utils.func_wrapper',
                           func_name="wrap_self_define_func",
                           param_list=[],
-                          param_map={"func": {"name": "prepare_data"},
-                                     "data": {"name": "data"},
-                                     "settings": {"name": "settings"}},
+                          param_map={"func": "prepare_data",
+                                     "data": "data",
+                                     "settings": "settings"},
                           result_name="raw_data",
-                          condition={"params": [], "func": "True"})
+                          assertion={"left": "True", "operator": "=",
+                                     "right": "True"})
 
-split_step = build_step(name="split_data",
+split_step = StepConfig(name="split_data",
                         module_name="sklearn.model_selection",
                         func_name="train_test_split",
-                        param_list=[{"name": "raw_data", "key": "X"},
-                                    {"name": "raw_data", "key": "y"}],
+                        param_list=["raw_data['X']", "raw_data['y']"],
                         param_map={},
                         result_name="splited_data",
-                        condition={"params": [], "func": "True"})
+                        assertion={"left": "True", "operator": "=",
+                                   "right": "True"})
 
-init_clf_step = build_step(name="init_clf", module_name="sklearn.ensemble",
+init_clf_step = StepConfig(name="init_clf", module_name="sklearn.ensemble",
                            func_name="RandomForestClassifier", param_list=[],
                            param_map={
-                               "max_depth": {"name": "max_depth"},
-                               "random_state": {"name": "random_state"}
+                               "max_depth": "max_depth",
+                               "random_state": "random_state"
                            },
                            result_name="clf",
-                           condition={"params": [], "func": "True"})
+                           assertion={"left": "True", "operator": "=",
+                                      "right": "True"})
 
 fit_and_predict = '''
 def fit_clf(clf, X_train, y_train, X_test):
@@ -54,52 +56,54 @@ def fit_clf(clf, X_train, y_train, X_test):
     return prob_y[:, 1]
     '''
 
-fit_clf_step = build_step(name="fit_clf", module_name='utils.func_wrapper',
+fit_clf_step = StepConfig(name="fit_clf", module_name='utils.func_wrapper',
                           func_name="wrap_self_define_func", param_list=[],
-                          param_map={"func": {"name": "fit_and_predict"},
-                                     "clf": {"name": "clf"},
-                                     "X_train": {"name": "splited_data",
-                                                 "key": 0},
-                                     "y_train": {"name": "splited_data",
-                                                 "key": 2},
-                                     "X_test": {"name": "splited_data",
-                                                "key": 1}},
+                          param_map={"func": "fit_and_predict",
+                                     "clf": "clf",
+                                     "X_train": "splited_data[0]",
+                                     "y_train": "splited_data[2]",
+                                     "X_test": "splited_data[1]"},
                           result_name="prob_y",
-                          condition={"params": [], "func": "True"})
+                          assertion={"left": "True", "operator": "=",
+                                     "right": "True"})
 
-evaluation_step = build_step(name="evaluation", module_name="sklearn.metrics",
+evaluation_step = StepConfig(name="evaluation", module_name="sklearn.metrics",
                              func_name="roc_auc_score", param_list=[],
                              param_map={
-                                 "y_true": {"name": "splited_data", "key": 3},
-                                 "y_score": {"name": "prob_y"}},
+                                 "y_true": "splited_data[3]",
+                                 "y_score": "prob_y"},
                              result_name="auc_score",
-                             condition={"params": [], "func": "True"})
-configs = [read_step, prepare_step, split_step, init_clf_step, fit_clf_step,
-           evaluation_step]
+                             assertion={"left": "True", "operator": "=",
+                                        "right": "True"})
+steps = [read_step.serialize(), prepare_step.serialize(),
+         split_step.serialize(), init_clf_step.serialize(),
+         fit_clf_step.serialize(),
+         evaluation_step.serialize()]
 
-schema = {
-    "first_step": read_step["name"],
+config = {
+    "steps": steps,
+    "first_step": read_step.name,
     "schema": {
-        read_step["name"]: {
-            True: prepare_step["name"]
+        read_step.name: {
+            True: prepare_step.name
         },
 
-        prepare_step["name"]: {
-            True: split_step["name"]
+        prepare_step.name: {
+            True: split_step.name
         },
 
-        split_step["name"]: {
-            True: init_clf_step["name"]
+        split_step.name: {
+            True: init_clf_step.name
         },
 
-        init_clf_step["name"]: {
-            True: fit_clf_step["name"]
+        init_clf_step.name: {
+            True: fit_clf_step.name
         },
 
-        fit_clf_step["name"]: {
-            True: evaluation_step["name"]
+        fit_clf_step.name: {
+            True: evaluation_step.name
         },
-        evaluation_step["name"]: {
+        evaluation_step.name: {
             True: None
         },
     }
@@ -115,5 +119,5 @@ init_data = {
 # datapool = Datapool(init_data)
 # workflow.execute(datapool)
 # print(datapool.get("auc_score"))
-res = run_workflow.apply_async((configs, schema, init_data))
-print(res)
+res = run_workflow(config, init_data)
+print(res['auc_score'])
